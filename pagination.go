@@ -10,22 +10,22 @@ import (
 
 // ListOptions specifies optional parameters to List methods.
 type ListOptions struct {
-	Page        int       `url:"page,omitempty"`
-	PerPage     int       `url:"per_page,omitempty"`
+	Page         int        `url:"page,omitempty"`
+	PerPage      int        `url:"per_page,omitempty"`
 	UpdatedSince *time.Time `url:"updated_since,omitempty"`
 }
 
 // Paginated represents a paginated response from the Harvest API.
 type Paginated[T any] struct {
-	Items      []T              `json:"-"`
-	Links      *PaginationLinks `json:"links"`
-	PerPage    int              `json:"per_page"`
-	TotalPages int              `json:"total_pages"`
-	TotalEntries int            `json:"total_entries"`
-	NextPage   *int             `json:"next_page"`
-	PreviousPage *int           `json:"previous_page"`
-	Page       int              `json:"page"`
-	
+	Items        []T              `json:"-"`
+	Links        *PaginationLinks `json:"links"`
+	PerPage      int              `json:"per_page"`
+	TotalPages   int              `json:"total_pages"`
+	TotalEntries int              `json:"total_entries"`
+	NextPage     *int             `json:"next_page"`
+	PreviousPage *int             `json:"previous_page"`
+	Page         int              `json:"page"`
+
 	// The actual items will be in a field named after the resource type
 	// We'll handle this with custom unmarshaling or in resource-specific methods
 }
@@ -50,17 +50,17 @@ func (p *Paginated[T]) HasPreviousPage() bool {
 
 // Iterator provides iteration over paginated results.
 type Iterator[T any] struct {
-	client   *API
-	ctx      context.Context
-	path     string
-	opts     *ListOptions
-	current  *Paginated[T]
-	index    int
-	fetcher  func(context.Context, *API, string, *ListOptions) (*Paginated[T], error)
+	client  *API
+	ctx     context.Context
+	path    string
+	opts    *ListOptions
+	current *Paginated[T]
+	index   int
+	fetcher func(context.Context, *API, string, *ListOptions) (*Paginated[T], error)
 }
 
 // NewIterator creates a new iterator for paginated results.
-func NewIterator[T any](ctx context.Context, client *API, path string, opts *ListOptions, 
+func NewIterator[T any](ctx context.Context, client *API, path string, opts *ListOptions,
 	fetcher func(context.Context, *API, string, *ListOptions) (*Paginated[T], error)) *Iterator[T] {
 	if opts == nil {
 		opts = &ListOptions{}
@@ -71,7 +71,7 @@ func NewIterator[T any](ctx context.Context, client *API, path string, opts *Lis
 	if opts.PerPage == 0 {
 		opts.PerPage = 100 // Default page size
 	}
-	
+
 	return &Iterator[T]{
 		client:  client,
 		ctx:     ctx,
@@ -98,7 +98,7 @@ func (it *Iterator[T]) Next() (*T, error) {
 		if !it.current.HasNextPage() {
 			return nil, nil // End of iteration
 		}
-		
+
 		it.opts.Page = *it.current.NextPage
 		page, err := it.fetcher(it.ctx, it.client, it.path, it.opts)
 		if err != nil {
@@ -121,7 +121,7 @@ func (it *Iterator[T]) Next() (*T, error) {
 // All fetches all pages and returns all items.
 func (it *Iterator[T]) All() ([]T, error) {
 	var allItems []T
-	
+
 	for {
 		item, err := it.Next()
 		if err != nil {
@@ -132,7 +132,7 @@ func (it *Iterator[T]) All() ([]T, error) {
 		}
 		allItems = append(allItems, *item)
 	}
-	
+
 	return allItems, nil
 }
 
@@ -162,7 +162,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 // ParseRate parses the rate limit headers from an HTTP response.
 func ParseRate(r *http.Response) Rate {
 	rate := Rate{}
-	
+
 	if limit := r.Header.Get("X-RateLimit-Limit"); limit != "" {
 		rate.Limit, _ = strconv.Atoi(limit)
 	}
@@ -174,6 +174,6 @@ func ParseRate(r *http.Response) Rate {
 			rate.Reset = Timestamp{time.Unix(timestamp, 0)}
 		}
 	}
-	
+
 	return rate
 }

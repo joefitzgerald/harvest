@@ -44,7 +44,7 @@ func (s *TasksService) List(ctx context.Context, opts *TaskListOptions) (*TaskLi
 
 	// Copy tasks to Items for pagination
 	tasks.Items = tasks.Tasks
-	
+
 	return &tasks, nil
 }
 

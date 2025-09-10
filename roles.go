@@ -42,7 +42,7 @@ func (s *RolesService) List(ctx context.Context, opts *RoleListOptions) (*RoleLi
 
 	// Copy roles to Items for pagination
 	roles.Items = roles.Roles
-	
+
 	return &roles, nil
 }
 

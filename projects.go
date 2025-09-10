@@ -14,8 +14,8 @@ type ProjectsService struct {
 // ProjectListOptions specifies optional parameters to the List method.
 type ProjectListOptions struct {
 	ListOptions
-	IsActive   *bool  `url:"is_active,omitempty"`
-	ClientID   int64  `url:"client_id,omitempty"`
+	IsActive     *bool  `url:"is_active,omitempty"`
+	ClientID     int64  `url:"client_id,omitempty"`
 	UpdatedSince string `url:"updated_since,omitempty"`
 }
 
@@ -45,7 +45,7 @@ func (s *ProjectsService) List(ctx context.Context, opts *ProjectListOptions) (*
 
 	// Copy projects to Items for pagination
 	projects.Items = projects.Projects
-	
+
 	return &projects, nil
 }
 
@@ -56,26 +56,26 @@ func (s *ProjectsService) Get(ctx context.Context, projectID int64) (*Project, e
 
 // ProjectCreateRequest represents a request to create a project.
 type ProjectCreateRequest struct {
-	ClientID                    int64   `json:"client_id"`
-	Name                        string  `json:"name"`
-	Code                        string  `json:"code,omitempty"`
-	IsActive                    *bool   `json:"is_active,omitempty"`
-	IsBillable                  *bool   `json:"is_billable,omitempty"`
-	IsFixedFee                  *bool   `json:"is_fixed_fee,omitempty"`
-	BillBy                      string  `json:"bill_by,omitempty"`
-	Budget                      float64 `json:"budget,omitempty"`
-	BudgetBy                    string  `json:"budget_by,omitempty"`
-	BudgetIsMonthly             *bool   `json:"budget_is_monthly,omitempty"`
-	NotifyWhenOverBudget        *bool   `json:"notify_when_over_budget,omitempty"`
+	ClientID                         int64   `json:"client_id"`
+	Name                             string  `json:"name"`
+	Code                             string  `json:"code,omitempty"`
+	IsActive                         *bool   `json:"is_active,omitempty"`
+	IsBillable                       *bool   `json:"is_billable,omitempty"`
+	IsFixedFee                       *bool   `json:"is_fixed_fee,omitempty"`
+	BillBy                           string  `json:"bill_by,omitempty"`
+	Budget                           float64 `json:"budget,omitempty"`
+	BudgetBy                         string  `json:"budget_by,omitempty"`
+	BudgetIsMonthly                  *bool   `json:"budget_is_monthly,omitempty"`
+	NotifyWhenOverBudget             *bool   `json:"notify_when_over_budget,omitempty"`
 	OverBudgetNotificationPercentage float64 `json:"over_budget_notification_percentage,omitempty"`
-	ShowBudgetToAll             *bool   `json:"show_budget_to_all,omitempty"`
-	CostBudget                  float64 `json:"cost_budget,omitempty"`
-	CostBudgetIncludeExpenses   *bool   `json:"cost_budget_include_expenses,omitempty"`
-	HourlyRate                  float64 `json:"hourly_rate,omitempty"`
-	Fee                         float64 `json:"fee,omitempty"`
-	Notes                       string  `json:"notes,omitempty"`
-	StartsOn                    string  `json:"starts_on,omitempty"`
-	EndsOn                      string  `json:"ends_on,omitempty"`
+	ShowBudgetToAll                  *bool   `json:"show_budget_to_all,omitempty"`
+	CostBudget                       float64 `json:"cost_budget,omitempty"`
+	CostBudgetIncludeExpenses        *bool   `json:"cost_budget_include_expenses,omitempty"`
+	HourlyRate                       float64 `json:"hourly_rate,omitempty"`
+	Fee                              float64 `json:"fee,omitempty"`
+	Notes                            string  `json:"notes,omitempty"`
+	StartsOn                         string  `json:"starts_on,omitempty"`
+	EndsOn                           string  `json:"ends_on,omitempty"`
 }
 
 // Create creates a new project.
@@ -85,26 +85,26 @@ func (s *ProjectsService) Create(ctx context.Context, project *ProjectCreateRequ
 
 // ProjectUpdateRequest represents a request to update a project.
 type ProjectUpdateRequest struct {
-	ClientID                    int64   `json:"client_id,omitempty"`
-	Name                        string  `json:"name,omitempty"`
-	Code                        string  `json:"code,omitempty"`
-	IsActive                    *bool   `json:"is_active,omitempty"`
-	IsBillable                  *bool   `json:"is_billable,omitempty"`
-	IsFixedFee                  *bool   `json:"is_fixed_fee,omitempty"`
-	BillBy                      string  `json:"bill_by,omitempty"`
-	Budget                      float64 `json:"budget,omitempty"`
-	BudgetBy                    string  `json:"budget_by,omitempty"`
-	BudgetIsMonthly             *bool   `json:"budget_is_monthly,omitempty"`
-	NotifyWhenOverBudget        *bool   `json:"notify_when_over_budget,omitempty"`
+	ClientID                         int64   `json:"client_id,omitempty"`
+	Name                             string  `json:"name,omitempty"`
+	Code                             string  `json:"code,omitempty"`
+	IsActive                         *bool   `json:"is_active,omitempty"`
+	IsBillable                       *bool   `json:"is_billable,omitempty"`
+	IsFixedFee                       *bool   `json:"is_fixed_fee,omitempty"`
+	BillBy                           string  `json:"bill_by,omitempty"`
+	Budget                           float64 `json:"budget,omitempty"`
+	BudgetBy                         string  `json:"budget_by,omitempty"`
+	BudgetIsMonthly                  *bool   `json:"budget_is_monthly,omitempty"`
+	NotifyWhenOverBudget             *bool   `json:"notify_when_over_budget,omitempty"`
 	OverBudgetNotificationPercentage float64 `json:"over_budget_notification_percentage,omitempty"`
-	ShowBudgetToAll             *bool   `json:"show_budget_to_all,omitempty"`
-	CostBudget                  float64 `json:"cost_budget,omitempty"`
-	CostBudgetIncludeExpenses   *bool   `json:"cost_budget_include_expenses,omitempty"`
-	HourlyRate                  float64 `json:"hourly_rate,omitempty"`
-	Fee                         float64 `json:"fee,omitempty"`
-	Notes                       string  `json:"notes,omitempty"`
-	StartsOn                    string  `json:"starts_on,omitempty"`
-	EndsOn                      string  `json:"ends_on,omitempty"`
+	ShowBudgetToAll                  *bool   `json:"show_budget_to_all,omitempty"`
+	CostBudget                       float64 `json:"cost_budget,omitempty"`
+	CostBudgetIncludeExpenses        *bool   `json:"cost_budget_include_expenses,omitempty"`
+	HourlyRate                       float64 `json:"hourly_rate,omitempty"`
+	Fee                              float64 `json:"fee,omitempty"`
+	Notes                            string  `json:"notes,omitempty"`
+	StartsOn                         string  `json:"starts_on,omitempty"`
+	EndsOn                           string  `json:"ends_on,omitempty"`
 }
 
 // Update updates a project.
@@ -151,7 +151,7 @@ func (s *ProjectsService) ListUserAssignments(ctx context.Context, projectID int
 
 	// Copy assignments to Items for pagination
 	assignments.Items = assignments.UserAssignments
-	
+
 	return &assignments, nil
 }
 
@@ -227,7 +227,7 @@ func (s *ProjectsService) ListTaskAssignments(ctx context.Context, projectID int
 
 	// Copy assignments to Items for pagination
 	assignments.Items = assignments.TaskAssignments
-	
+
 	return &assignments, nil
 }
 

@@ -47,7 +47,7 @@ func (s *EstimatesService) List(ctx context.Context, opts *EstimateListOptions) 
 
 	// Copy estimates to Items for pagination
 	estimates.Items = estimates.Estimates
-	
+
 	return &estimates, nil
 }
 
@@ -58,17 +58,17 @@ func (s *EstimatesService) Get(ctx context.Context, estimateID int64) (*Estimate
 
 // EstimateCreateRequest represents a request to create an estimate.
 type EstimateCreateRequest struct {
-	ClientID      int64                      `json:"client_id"`
-	Number        string                     `json:"number,omitempty"`
-	PurchaseOrder string                     `json:"purchase_order,omitempty"`
-	Tax           float64                    `json:"tax,omitempty"`
-	Tax2          float64                    `json:"tax2,omitempty"`
-	Discount      float64                    `json:"discount,omitempty"`
-	Subject       string                     `json:"subject,omitempty"`
-	Notes         string                     `json:"notes,omitempty"`
-	Currency      string                     `json:"currency,omitempty"`
-	IssueDate     string                     `json:"issue_date,omitempty"`
-	LineItems     []EstimateLineItemRequest  `json:"line_items,omitempty"`
+	ClientID      int64                     `json:"client_id"`
+	Number        string                    `json:"number,omitempty"`
+	PurchaseOrder string                    `json:"purchase_order,omitempty"`
+	Tax           float64                   `json:"tax,omitempty"`
+	Tax2          float64                   `json:"tax2,omitempty"`
+	Discount      float64                   `json:"discount,omitempty"`
+	Subject       string                    `json:"subject,omitempty"`
+	Notes         string                    `json:"notes,omitempty"`
+	Currency      string                    `json:"currency,omitempty"`
+	IssueDate     string                    `json:"issue_date,omitempty"`
+	LineItems     []EstimateLineItemRequest `json:"line_items,omitempty"`
 }
 
 // EstimateLineItemRequest represents a line item in an estimate request.
@@ -88,17 +88,17 @@ func (s *EstimatesService) Create(ctx context.Context, estimate *EstimateCreateR
 
 // EstimateUpdateRequest represents a request to update an estimate.
 type EstimateUpdateRequest struct {
-	ClientID      int64                      `json:"client_id,omitempty"`
-	Number        string                     `json:"number,omitempty"`
-	PurchaseOrder string                     `json:"purchase_order,omitempty"`
-	Tax           float64                    `json:"tax,omitempty"`
-	Tax2          float64                    `json:"tax2,omitempty"`
-	Discount      float64                    `json:"discount,omitempty"`
-	Subject       string                     `json:"subject,omitempty"`
-	Notes         string                     `json:"notes,omitempty"`
-	Currency      string                     `json:"currency,omitempty"`
-	IssueDate     string                     `json:"issue_date,omitempty"`
-	LineItems     []EstimateLineItemRequest  `json:"line_items,omitempty"`
+	ClientID      int64                     `json:"client_id,omitempty"`
+	Number        string                    `json:"number,omitempty"`
+	PurchaseOrder string                    `json:"purchase_order,omitempty"`
+	Tax           float64                   `json:"tax,omitempty"`
+	Tax2          float64                   `json:"tax2,omitempty"`
+	Discount      float64                   `json:"discount,omitempty"`
+	Subject       string                    `json:"subject,omitempty"`
+	Notes         string                    `json:"notes,omitempty"`
+	Currency      string                    `json:"currency,omitempty"`
+	IssueDate     string                    `json:"issue_date,omitempty"`
+	LineItems     []EstimateLineItemRequest `json:"line_items,omitempty"`
 }
 
 // Update updates an estimate.

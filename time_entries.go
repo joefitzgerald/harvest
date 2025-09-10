@@ -14,16 +14,16 @@ type TimeEntriesService struct {
 // TimeEntryListOptions specifies optional parameters to the List method.
 type TimeEntryListOptions struct {
 	ListOptions
-	UserID       int64  `url:"user_id,omitempty"`
-	ClientID     int64  `url:"client_id,omitempty"`
-	ProjectID    int64  `url:"project_id,omitempty"`
-	TaskID       int64  `url:"task_id,omitempty"`
+	UserID              int64  `url:"user_id,omitempty"`
+	ClientID            int64  `url:"client_id,omitempty"`
+	ProjectID           int64  `url:"project_id,omitempty"`
+	TaskID              int64  `url:"task_id,omitempty"`
 	ExternalReferenceID string `url:"external_reference_id,omitempty"`
-	IsBilled     *bool  `url:"is_billed,omitempty"`
-	IsRunning    *bool  `url:"is_running,omitempty"`
-	UpdatedSince string `url:"updated_since,omitempty"`
-	From         string `url:"from,omitempty"`
-	To           string `url:"to,omitempty"`
+	IsBilled            *bool  `url:"is_billed,omitempty"`
+	IsRunning           *bool  `url:"is_running,omitempty"`
+	UpdatedSince        string `url:"updated_since,omitempty"`
+	From                string `url:"from,omitempty"`
+	To                  string `url:"to,omitempty"`
 }
 
 // TimeEntryList represents a list of time entries.
@@ -52,7 +52,7 @@ func (s *TimeEntriesService) List(ctx context.Context, opts *TimeEntryListOption
 
 	// Copy entries to Items for pagination
 	entries.Items = entries.TimeEntries
-	
+
 	return &entries, nil
 }
 
@@ -63,12 +63,12 @@ func (s *TimeEntriesService) Get(ctx context.Context, timeEntryID int64) (*TimeE
 
 // TimeEntryCreateViaDurationRequest represents a request to create a time entry via duration.
 type TimeEntryCreateViaDurationRequest struct {
-	ProjectID  int64   `json:"project_id"`
-	TaskID     int64   `json:"task_id"`
-	SpentDate  string  `json:"spent_date"`
-	Hours      float64 `json:"hours"`
-	UserID     int64   `json:"user_id,omitempty"`
-	Notes      string  `json:"notes,omitempty"`
+	ProjectID         int64                     `json:"project_id"`
+	TaskID            int64                     `json:"task_id"`
+	SpentDate         string                    `json:"spent_date"`
+	Hours             float64                   `json:"hours"`
+	UserID            int64                     `json:"user_id,omitempty"`
+	Notes             string                    `json:"notes,omitempty"`
 	ExternalReference *ExternalReferenceRequest `json:"external_reference,omitempty"`
 }
 
@@ -87,13 +87,13 @@ func (s *TimeEntriesService) CreateViaDuration(ctx context.Context, entry *TimeE
 
 // TimeEntryCreateViaStartEndRequest represents a request to create a time entry via start and end time.
 type TimeEntryCreateViaStartEndRequest struct {
-	ProjectID    int64   `json:"project_id"`
-	TaskID       int64   `json:"task_id"`
-	SpentDate    string  `json:"spent_date"`
-	StartedTime  string  `json:"started_time"`
-	EndedTime    string  `json:"ended_time"`
-	UserID       int64   `json:"user_id,omitempty"`
-	Notes        string  `json:"notes,omitempty"`
+	ProjectID         int64                     `json:"project_id"`
+	TaskID            int64                     `json:"task_id"`
+	SpentDate         string                    `json:"spent_date"`
+	StartedTime       string                    `json:"started_time"`
+	EndedTime         string                    `json:"ended_time"`
+	UserID            int64                     `json:"user_id,omitempty"`
+	Notes             string                    `json:"notes,omitempty"`
 	ExternalReference *ExternalReferenceRequest `json:"external_reference,omitempty"`
 }
 
@@ -104,13 +104,13 @@ func (s *TimeEntriesService) CreateViaStartEnd(ctx context.Context, entry *TimeE
 
 // TimeEntryUpdateRequest represents a request to update a time entry.
 type TimeEntryUpdateRequest struct {
-	ProjectID    int64   `json:"project_id,omitempty"`
-	TaskID       int64   `json:"task_id,omitempty"`
-	SpentDate    string  `json:"spent_date,omitempty"`
-	StartedTime  string  `json:"started_time,omitempty"`
-	EndedTime    string  `json:"ended_time,omitempty"`
-	Hours        float64 `json:"hours,omitempty"`
-	Notes        string  `json:"notes,omitempty"`
+	ProjectID         int64                     `json:"project_id,omitempty"`
+	TaskID            int64                     `json:"task_id,omitempty"`
+	SpentDate         string                    `json:"spent_date,omitempty"`
+	StartedTime       string                    `json:"started_time,omitempty"`
+	EndedTime         string                    `json:"ended_time,omitempty"`
+	Hours             float64                   `json:"hours,omitempty"`
+	Notes             string                    `json:"notes,omitempty"`
 	ExternalReference *ExternalReferenceRequest `json:"external_reference,omitempty"`
 }
 

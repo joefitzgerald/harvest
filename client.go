@@ -27,18 +27,18 @@ type API struct {
 	userAgent   string
 
 	// Service endpoints
-	Company      *CompanyService
-	Clients      *ClientsService
-	Contacts     *ContactsService
-	Projects     *ProjectsService
-	TimeEntries  *TimeEntriesService
-	Users        *UsersService
-	Tasks        *TasksService
-	Invoices     *InvoicesService
-	Estimates    *EstimatesService
-	Expenses     *ExpensesService
-	Reports      *ReportsService
-	Roles        *RolesService
+	Company     *CompanyService
+	Clients     *ClientsService
+	Contacts    *ContactsService
+	Projects    *ProjectsService
+	TimeEntries *TimeEntriesService
+	Users       *UsersService
+	Tasks       *TasksService
+	Invoices    *InvoicesService
+	Estimates   *EstimatesService
+	Expenses    *ExpensesService
+	Reports     *ReportsService
+	Roles       *RolesService
 }
 
 // New creates a new Harvest API client with the given User-Agent.

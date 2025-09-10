@@ -49,7 +49,7 @@ func (s *ExpensesService) List(ctx context.Context, opts *ExpenseListOptions) (*
 
 	// Copy expenses to Items for pagination
 	expenses.Items = expenses.Expenses
-	
+
 	return &expenses, nil
 }
 
@@ -129,7 +129,7 @@ func (s *ExpensesService) ListCategories(ctx context.Context, opts *ExpenseCateg
 
 	// Copy categories to Items for pagination
 	categories.Items = categories.ExpenseCategories
-	
+
 	return &categories, nil
 }
 

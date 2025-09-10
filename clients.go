@@ -44,7 +44,7 @@ func (s *ClientsService) List(ctx context.Context, opts *ClientListOptions) (*Cl
 
 	// Copy clients to Items for pagination
 	clients.Items = clients.Clients
-	
+
 	return &clients, nil
 }
 
@@ -123,7 +123,7 @@ func (s *ContactsService) List(ctx context.Context, opts *ContactListOptions) (*
 
 	// Copy contacts to Items for pagination
 	contacts.Items = contacts.Contacts
-	
+
 	return &contacts, nil
 }
 

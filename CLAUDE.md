@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Building and Testing
+
 ```bash
 # Download dependencies
 go mod download
@@ -27,6 +28,7 @@ go test -v -run TestName ./...  # Run specific test
 ```
 
 ### Linting and Quality Checks
+
 ```bash
 # Install golangci-lint if needed
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
@@ -61,6 +63,7 @@ This is a Go client library for the Harvest API v2 that uses modern Go patterns 
 ### Authentication
 
 The library requires two environment variables:
+
 - `HARVEST_ACCESS_TOKEN`: Personal access token from Harvest
 - `HARVEST_ACCOUNT_ID`: Harvest account ID
 
@@ -69,6 +72,7 @@ User-Agent header is mandatory per Harvest API requirements (format: "AppName (c
 ### API Coverage
 
 The library provides complete coverage of Harvest API v2 endpoints:
+
 - Company, Clients, Contacts
 - Projects (with User/Task Assignments)
 - Users (with Project/Expense Category Assignments, Billable Rates, Cost Rates)
@@ -82,6 +86,7 @@ The library provides complete coverage of Harvest API v2 endpoints:
 ### Postman Collection
 
 The `docs/harvest-api-v2.postman_collection.json` file contains the complete API specification and can be used for:
+
 - API endpoint reference
 - Request/response examples
 - Testing API calls directly
@@ -99,6 +104,7 @@ The `docs/harvest-api-v2.postman_collection.json` file contains the complete API
 ## Adding New Features
 
 When implementing new Harvest API endpoints:
+
 1. Add request/response types to `types.go`
 2. Create or update the appropriate service file
 3. Use generic CRUD methods where applicable

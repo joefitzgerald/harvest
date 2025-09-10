@@ -48,7 +48,7 @@ func (s *InvoicesService) List(ctx context.Context, opts *InvoiceListOptions) (*
 
 	// Copy invoices to Items for pagination
 	invoices.Items = invoices.Invoices
-	
+
 	return &invoices, nil
 }
 
@@ -59,20 +59,20 @@ func (s *InvoicesService) Get(ctx context.Context, invoiceID int64) (*Invoice, e
 
 // InvoiceCreateRequest represents a request to create an invoice.
 type InvoiceCreateRequest struct {
-	ClientID      int64                     `json:"client_id"`
-	EstimateID    int64                     `json:"estimate_id,omitempty"`
-	Number        string                    `json:"number,omitempty"`
-	PurchaseOrder string                    `json:"purchase_order,omitempty"`
-	Tax           float64                   `json:"tax,omitempty"`
-	Tax2          float64                   `json:"tax2,omitempty"`
-	Discount      float64                   `json:"discount,omitempty"`
-	Subject       string                    `json:"subject,omitempty"`
-	Notes         string                    `json:"notes,omitempty"`
-	Currency      string                    `json:"currency,omitempty"`
-	IssueDate     string                    `json:"issue_date,omitempty"`
-	DueDate       string                    `json:"due_date,omitempty"`
-	PaymentTerm   string                    `json:"payment_term,omitempty"`
-	LineItems     []InvoiceLineItemRequest  `json:"line_items,omitempty"`
+	ClientID      int64                    `json:"client_id"`
+	EstimateID    int64                    `json:"estimate_id,omitempty"`
+	Number        string                   `json:"number,omitempty"`
+	PurchaseOrder string                   `json:"purchase_order,omitempty"`
+	Tax           float64                  `json:"tax,omitempty"`
+	Tax2          float64                  `json:"tax2,omitempty"`
+	Discount      float64                  `json:"discount,omitempty"`
+	Subject       string                   `json:"subject,omitempty"`
+	Notes         string                   `json:"notes,omitempty"`
+	Currency      string                   `json:"currency,omitempty"`
+	IssueDate     string                   `json:"issue_date,omitempty"`
+	DueDate       string                   `json:"due_date,omitempty"`
+	PaymentTerm   string                   `json:"payment_term,omitempty"`
+	LineItems     []InvoiceLineItemRequest `json:"line_items,omitempty"`
 }
 
 // InvoiceLineItemRequest represents a line item in an invoice request.
@@ -93,20 +93,20 @@ func (s *InvoicesService) Create(ctx context.Context, invoice *InvoiceCreateRequ
 
 // InvoiceUpdateRequest represents a request to update an invoice.
 type InvoiceUpdateRequest struct {
-	ClientID      int64                     `json:"client_id,omitempty"`
-	EstimateID    int64                     `json:"estimate_id,omitempty"`
-	Number        string                    `json:"number,omitempty"`
-	PurchaseOrder string                    `json:"purchase_order,omitempty"`
-	Tax           float64                   `json:"tax,omitempty"`
-	Tax2          float64                   `json:"tax2,omitempty"`
-	Discount      float64                   `json:"discount,omitempty"`
-	Subject       string                    `json:"subject,omitempty"`
-	Notes         string                    `json:"notes,omitempty"`
-	Currency      string                    `json:"currency,omitempty"`
-	IssueDate     string                    `json:"issue_date,omitempty"`
-	DueDate       string                    `json:"due_date,omitempty"`
-	PaymentTerm   string                    `json:"payment_term,omitempty"`
-	LineItems     []InvoiceLineItemRequest  `json:"line_items,omitempty"`
+	ClientID      int64                    `json:"client_id,omitempty"`
+	EstimateID    int64                    `json:"estimate_id,omitempty"`
+	Number        string                   `json:"number,omitempty"`
+	PurchaseOrder string                   `json:"purchase_order,omitempty"`
+	Tax           float64                  `json:"tax,omitempty"`
+	Tax2          float64                  `json:"tax2,omitempty"`
+	Discount      float64                  `json:"discount,omitempty"`
+	Subject       string                   `json:"subject,omitempty"`
+	Notes         string                   `json:"notes,omitempty"`
+	Currency      string                   `json:"currency,omitempty"`
+	IssueDate     string                   `json:"issue_date,omitempty"`
+	DueDate       string                   `json:"due_date,omitempty"`
+	PaymentTerm   string                   `json:"payment_term,omitempty"`
+	LineItems     []InvoiceLineItemRequest `json:"line_items,omitempty"`
 }
 
 // Update updates an invoice.
