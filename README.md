@@ -1,4 +1,4 @@
-# Harvest API v2 Go Client
+# Harvest API v2 Go Client [![](https://godoc.org/github.com/joefitzgerald/forecast?status.svg)](https://godoc.org/github.com/joefitzgerald/forecast)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/joefitzgerald/harvest.svg)](https://pkg.go.dev/github.com/joefitzgerald/harvest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joefitzgerald/harvest)](https://goreportcard.com/report/github.com/joefitzgerald/harvest)
@@ -45,7 +45,7 @@ import (
     "fmt"
     "log"
     "os"
-    
+
     "github.com/joefitzgerald/harvest"
 )
 
@@ -53,22 +53,22 @@ func main() {
     // Set environment variables:
     // export HARVEST_ACCESS_TOKEN="your-token"
     // export HARVEST_ACCOUNT_ID="your-account-id"
-    
+
     // Create client with required User-Agent
     client, err := harvest.New("MyApp (contact@example.com)")
     if err != nil {
         log.Fatal(err)
     }
-    
+
     ctx := context.Background()
-    
+
     // Get company info
     company, err := client.Company.Get(ctx)
     if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Company: %s\n", company.Name)
-    
+
     // List active projects
     projects, err := client.Projects.List(ctx, &harvest.ProjectListOptions{
         ListOptions: harvest.ListOptions{
@@ -80,7 +80,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     for _, project := range projects.Projects {
         fmt.Printf("Project: %s (Client: %s)\n", project.Name, project.Client.Name)
     }
@@ -90,10 +90,12 @@ func main() {
 ## Authentication
 
 The client requires two environment variables:
+
 - `HARVEST_ACCESS_TOKEN`: Your personal access token from Harvest
 - `HARVEST_ACCOUNT_ID`: Your Harvest account ID
 
 To get these:
+
 1. Log in to Harvest
 2. Go to [Developers > Personal Access Tokens](https://id.getharvest.com/developers)
 3. Create a new token
@@ -104,7 +106,7 @@ You can also create a client with explicit credentials:
 ```go
 client, err := harvest.NewWithConfig(
     "your-access-token",
-    "your-account-id", 
+    "your-account-id",
     "MyApp (contact@example.com)",
     nil, // optional custom HTTP client
 )
@@ -113,16 +115,19 @@ client, err := harvest.NewWithConfig(
 ## User-Agent Requirement
 
 Harvest requires a User-Agent header that includes:
+
 1. The name of your application
 2. A link to your application or email address
 
 Examples:
+
 - `"MyTimeTracker (https://example.com)"`
 - `"John's Integration (john@example.com)"`
 
 ## Available Services
 
 ### Core Resources
+
 - **Company**: Get company information
 - **Clients**: Manage clients and contacts
 - **Projects**: Manage projects and assignments
@@ -131,11 +136,13 @@ Examples:
 - **TimeEntries**: Track time entries
 
 ### Financial Resources
+
 - **Invoices**: Create and manage invoices
 - **Estimates**: Create and manage estimates
 - **Expenses**: Track expenses and expense categories
 
 ### Reporting
+
 - **Reports**: Access various reports
   - Time reports
   - Expense reports
@@ -143,6 +150,7 @@ Examples:
   - Project budget reports
 
 ### Administration
+
 - **Roles**: Manage user roles
 
 ## Examples
@@ -183,7 +191,7 @@ project, err := client.Projects.Create(ctx, &harvest.ProjectCreateRequest{
 })
 
 // Assign user to project
-assignment, err := client.Projects.CreateUserAssignment(ctx, project.ID, 
+assignment, err := client.Projects.CreateUserAssignment(ctx, project.ID,
     &harvest.UserAssignmentCreateRequest{
         UserID:           456,
         IsProjectManager: &[]bool{true}[0],
@@ -212,11 +220,11 @@ for {
     if err != nil {
         return err
     }
-    
+
     for _, project := range projects.Projects {
         // Process project
     }
-    
+
     if !projects.HasNextPage() {
         break
     }
@@ -247,31 +255,31 @@ This library provides complete coverage of the Harvest API v2. All endpoints doc
 
 ### Implemented Endpoints
 
-| Resource | Operations |
-|----------|------------|
-| **Company** | Get |
-| **Clients** | List, Get, Create, Update, Delete |
-| **Contacts** | List, Get, Create, Update, Delete |
-| **Projects** | List, Get, Create, Update, Delete |
-| **Project User Assignments** | List, Get, Create, Update, Delete |
-| **Project Task Assignments** | List, Get, Create, Update, Delete |
-| **Tasks** | List, Get, Create, Update, Delete |
-| **Users** | List, Get, Create, Update, Delete, Get Current |
-| **User Project Assignments** | List, Get Current |
-| **User Billable Rates** | List, Get, Create, Update, Delete |
-| **User Cost Rates** | List, Get, Create, Update, Delete |
-| **Time Entries** | List, Get, Create, Update, Delete, Restart, Stop |
-| **Invoices** | List, Get, Create, Update, Delete, Send |
-| **Invoice Line Items** | Create, Update, Delete |
-| **Invoice Messages** | List, Get, Create, Delete |
-| **Invoice Payments** | List, Get, Create, Delete |
-| **Estimates** | List, Get, Create, Update, Delete, Send |
-| **Estimate Line Items** | Create, Update, Delete |
-| **Estimate Messages** | List, Get, Create, Delete |
-| **Expenses** | List, Get, Create, Update, Delete |
-| **Expense Categories** | List, Get, Create, Update, Delete |
-| **Roles** | List, Get, Create, Update, Delete |
-| **Reports** | Time, Expenses, Uninvoiced, Project Budget |
+| Resource                     | Operations                                       |
+| ---------------------------- | ------------------------------------------------ |
+| **Company**                  | Get                                              |
+| **Clients**                  | List, Get, Create, Update, Delete                |
+| **Contacts**                 | List, Get, Create, Update, Delete                |
+| **Projects**                 | List, Get, Create, Update, Delete                |
+| **Project User Assignments** | List, Get, Create, Update, Delete                |
+| **Project Task Assignments** | List, Get, Create, Update, Delete                |
+| **Tasks**                    | List, Get, Create, Update, Delete                |
+| **Users**                    | List, Get, Create, Update, Delete, Get Current   |
+| **User Project Assignments** | List, Get Current                                |
+| **User Billable Rates**      | List, Get, Create, Update, Delete                |
+| **User Cost Rates**          | List, Get, Create, Update, Delete                |
+| **Time Entries**             | List, Get, Create, Update, Delete, Restart, Stop |
+| **Invoices**                 | List, Get, Create, Update, Delete, Send          |
+| **Invoice Line Items**       | Create, Update, Delete                           |
+| **Invoice Messages**         | List, Get, Create, Delete                        |
+| **Invoice Payments**         | List, Get, Create, Delete                        |
+| **Estimates**                | List, Get, Create, Update, Delete, Send          |
+| **Estimate Line Items**      | Create, Update, Delete                           |
+| **Estimate Messages**        | List, Get, Create, Delete                        |
+| **Expenses**                 | List, Get, Create, Update, Delete                |
+| **Expense Categories**       | List, Get, Create, Update, Delete                |
+| **Roles**                    | List, Get, Create, Update, Delete                |
+| **Reports**                  | Time, Expenses, Uninvoiced, Project Budget       |
 
 ## Development
 
@@ -287,9 +295,6 @@ go build ./...
 # Run tests
 go test -v ./...
 
-# Format code
-gofmt -w .
-
 # Lint
 golangci-lint run ./...
 ```
@@ -299,6 +304,7 @@ golangci-lint run ./...
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 When adding new endpoints:
+
 1. Add types to `types.go`
 2. Add service methods following the existing pattern
 3. Use generics for standard CRUD operations
@@ -309,11 +315,9 @@ When adding new endpoints:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## Generated with Claude Code
 
-- [Harvest](https://www.getharvest.com/) for providing a comprehensive API
-- [shopspring/decimal](https://github.com/shopspring/decimal) for precise decimal handling
-- [google/go-querystring](https://github.com/google/go-querystring) for query string encoding
+The initial version of this client library was generated using [Claude Code (Opus 4.1)](https://claude.ai/code).
 
 ## Related Projects
 
