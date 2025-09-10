@@ -1,4 +1,4 @@
-# Harvest API v2 Go Client [![](https://godoc.org/github.com/joefitzgerald/forecast?status.svg)](https://godoc.org/github.com/joefitzgerald/forecast)
+# Harvest API v2 Go Client [![](https://godoc.org/github.com/joefitzgerald/harvest?status.svg)](https://godoc.org/github.com/joefitzgerald/harvest)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/joefitzgerald/harvest.svg)](https://pkg.go.dev/github.com/joefitzgerald/harvest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joefitzgerald/harvest)](https://goreportcard.com/report/github.com/joefitzgerald/harvest)
