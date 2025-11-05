@@ -3,6 +3,7 @@ package harvest
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // ProjectsService handles communication with the project related
@@ -25,8 +26,8 @@ type ProjectList struct {
 	Paginated[Project]
 }
 
-// List returns a list of projects.
-func (s *ProjectsService) List(ctx context.Context, opts *ProjectListOptions) (*ProjectList, error) {
+// ListPage returns a single page of projects.
+func (s *ProjectsService) ListPage(ctx context.Context, opts *ProjectListOptions) (*ProjectList, error) {
 	u, err := addOptions("projects", opts)
 	if err != nil {
 		return nil, err
@@ -47,6 +48,38 @@ func (s *ProjectsService) List(ctx context.Context, opts *ProjectListOptions) (*
 	projects.Items = projects.Projects
 
 	return &projects, nil
+}
+
+// List returns all projects across all pages.
+func (s *ProjectsService) List(ctx context.Context, opts *ProjectListOptions) ([]Project, error) {
+	if opts == nil {
+		opts = &ProjectListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allProjects []Project
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allProjects = append(allProjects, result.Projects...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allProjects, nil
 }
 
 // Get retrieves a specific project.
@@ -131,8 +164,8 @@ type UserAssignmentList struct {
 	Paginated[ProjectUserAssignment]
 }
 
-// ListUserAssignments returns a list of user assignments for a project.
-func (s *ProjectsService) ListUserAssignments(ctx context.Context, projectID int64, opts *UserAssignmentListOptions) (*UserAssignmentList, error) {
+// ListUserAssignmentsPage returns a single page of user assignments for a project.
+func (s *ProjectsService) ListUserAssignmentsPage(ctx context.Context, projectID int64, opts *UserAssignmentListOptions) (*UserAssignmentList, error) {
 	u, err := addOptions(fmt.Sprintf("projects/%d/user_assignments", projectID), opts)
 	if err != nil {
 		return nil, err
@@ -153,6 +186,69 @@ func (s *ProjectsService) ListUserAssignments(ctx context.Context, projectID int
 	assignments.Items = assignments.UserAssignments
 
 	return &assignments, nil
+}
+
+// ListUserAssignments returns all user assignments for a project across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *ProjectsService) ListUserAssignments(ctx context.Context, projectID int64, opts *UserAssignmentListOptions) ([]ProjectUserAssignment, error) {
+	if opts == nil {
+		opts = &UserAssignmentListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allAssignments []ProjectUserAssignment
+
+	// Fetch first page
+	result, err := s.ListUserAssignmentsPage(ctx, projectID, opts)
+	if err != nil {
+		return nil, err
+	}
+	allAssignments = append(allAssignments, result.UserAssignments...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var assignments UserAssignmentList
+			_, err = s.client.Do(ctx, req, &assignments)
+			if err != nil {
+				return nil, err
+			}
+			assignments.Items = assignments.UserAssignments
+			result = &assignments
+			allAssignments = append(allAssignments, assignments.UserAssignments...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListUserAssignmentsPage(ctx, projectID, opts)
+			if err != nil {
+				return nil, err
+			}
+			allAssignments = append(allAssignments, result.UserAssignments...)
+		} else {
+			break
+		}
+	}
+
+	return allAssignments, nil
 }
 
 // GetUserAssignment retrieves a specific user assignment.
@@ -207,8 +303,8 @@ type TaskAssignmentList struct {
 	Paginated[ProjectTaskAssignment]
 }
 
-// ListTaskAssignments returns a list of task assignments for a project.
-func (s *ProjectsService) ListTaskAssignments(ctx context.Context, projectID int64, opts *TaskAssignmentListOptions) (*TaskAssignmentList, error) {
+// ListTaskAssignmentsPage returns a single page of task assignments for a project.
+func (s *ProjectsService) ListTaskAssignmentsPage(ctx context.Context, projectID int64, opts *TaskAssignmentListOptions) (*TaskAssignmentList, error) {
 	u, err := addOptions(fmt.Sprintf("projects/%d/task_assignments", projectID), opts)
 	if err != nil {
 		return nil, err
@@ -229,6 +325,69 @@ func (s *ProjectsService) ListTaskAssignments(ctx context.Context, projectID int
 	assignments.Items = assignments.TaskAssignments
 
 	return &assignments, nil
+}
+
+// ListTaskAssignments returns all task assignments for a project across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *ProjectsService) ListTaskAssignments(ctx context.Context, projectID int64, opts *TaskAssignmentListOptions) ([]ProjectTaskAssignment, error) {
+	if opts == nil {
+		opts = &TaskAssignmentListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allAssignments []ProjectTaskAssignment
+
+	// Fetch first page
+	result, err := s.ListTaskAssignmentsPage(ctx, projectID, opts)
+	if err != nil {
+		return nil, err
+	}
+	allAssignments = append(allAssignments, result.TaskAssignments...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var assignments TaskAssignmentList
+			_, err = s.client.Do(ctx, req, &assignments)
+			if err != nil {
+				return nil, err
+			}
+			assignments.Items = assignments.TaskAssignments
+			result = &assignments
+			allAssignments = append(allAssignments, assignments.TaskAssignments...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListTaskAssignmentsPage(ctx, projectID, opts)
+			if err != nil {
+				return nil, err
+			}
+			allAssignments = append(allAssignments, result.TaskAssignments...)
+		} else {
+			break
+		}
+	}
+
+	return allAssignments, nil
 }
 
 // GetTaskAssignment retrieves a specific task assignment.

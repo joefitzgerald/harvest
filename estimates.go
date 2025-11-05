@@ -3,6 +3,7 @@ package harvest
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // EstimatesService handles communication with the estimate related
@@ -27,8 +28,8 @@ type EstimateList struct {
 	Paginated[Estimate]
 }
 
-// List returns a list of estimates.
-func (s *EstimatesService) List(ctx context.Context, opts *EstimateListOptions) (*EstimateList, error) {
+// ListPage returns a single page of estimates.
+func (s *EstimatesService) ListPage(ctx context.Context, opts *EstimateListOptions) (*EstimateList, error) {
 	u, err := addOptions("estimates", opts)
 	if err != nil {
 		return nil, err
@@ -49,6 +50,38 @@ func (s *EstimatesService) List(ctx context.Context, opts *EstimateListOptions) 
 	estimates.Items = estimates.Estimates
 
 	return &estimates, nil
+}
+
+// List returns all estimates across all pages.
+func (s *EstimatesService) List(ctx context.Context, opts *EstimateListOptions) ([]Estimate, error) {
+	if opts == nil {
+		opts = &EstimateListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allEstimates []Estimate
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allEstimates = append(allEstimates, result.Estimates...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allEstimates, nil
 }
 
 // Get retrieves a specific estimate.
@@ -129,4 +162,133 @@ func (s *EstimatesService) MarkAsDeclined(ctx context.Context, estimateID int64)
 // Reopen reopens a closed estimate.
 func (s *EstimatesService) Reopen(ctx context.Context, estimateID int64) (*Estimate, error) {
 	return Update[Estimate](ctx, s.client, fmt.Sprintf("estimates/%d/reopen", estimateID), nil)
+}
+
+// EstimateItemCategoryListOptions specifies optional parameters for listing estimate item categories.
+type EstimateItemCategoryListOptions struct {
+	ListOptions
+	UpdatedSince string `url:"updated_since,omitempty"`
+}
+
+// EstimateItemCategoryList represents a list of estimate item categories.
+type EstimateItemCategoryList struct {
+	EstimateItemCategories []EstimateItemCategory `json:"estimate_item_categories"`
+	Paginated[EstimateItemCategory]
+}
+
+// ListItemCategoriesPage returns a single page of estimate item categories.
+func (s *EstimatesService) ListItemCategoriesPage(ctx context.Context, opts *EstimateItemCategoryListOptions) (*EstimateItemCategoryList, error) {
+	u, err := addOptions("estimate_item_categories", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.client.NewRequest(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var categories EstimateItemCategoryList
+	_, err = s.client.Do(ctx, req, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy categories to Items for pagination
+	categories.Items = categories.EstimateItemCategories
+
+	return &categories, nil
+}
+
+// ListItemCategories returns all estimate item categories across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *EstimatesService) ListItemCategories(ctx context.Context, opts *EstimateItemCategoryListOptions) ([]EstimateItemCategory, error) {
+	if opts == nil {
+		opts = &EstimateItemCategoryListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allCategories []EstimateItemCategory
+
+	// Fetch first page
+	result, err := s.ListItemCategoriesPage(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	allCategories = append(allCategories, result.EstimateItemCategories...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var categories EstimateItemCategoryList
+			_, err = s.client.Do(ctx, req, &categories)
+			if err != nil {
+				return nil, err
+			}
+			categories.Items = categories.EstimateItemCategories
+			result = &categories
+			allCategories = append(allCategories, categories.EstimateItemCategories...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListItemCategoriesPage(ctx, opts)
+			if err != nil {
+				return nil, err
+			}
+			allCategories = append(allCategories, result.EstimateItemCategories...)
+		} else {
+			break
+		}
+	}
+
+	return allCategories, nil
+}
+
+// GetItemCategory retrieves a specific estimate item category.
+func (s *EstimatesService) GetItemCategory(ctx context.Context, categoryID int64) (*EstimateItemCategory, error) {
+	return Get[EstimateItemCategory](ctx, s.client, fmt.Sprintf("estimate_item_categories/%d", categoryID))
+}
+
+// EstimateItemCategoryCreateRequest represents a request to create an estimate item category.
+type EstimateItemCategoryCreateRequest struct {
+	Name string `json:"name"`
+}
+
+// CreateItemCategory creates a new estimate item category.
+func (s *EstimatesService) CreateItemCategory(ctx context.Context, category *EstimateItemCategoryCreateRequest) (*EstimateItemCategory, error) {
+	return Create[EstimateItemCategory](ctx, s.client, "estimate_item_categories", category)
+}
+
+// EstimateItemCategoryUpdateRequest represents a request to update an estimate item category.
+type EstimateItemCategoryUpdateRequest struct {
+	Name string `json:"name,omitempty"`
+}
+
+// UpdateItemCategory updates an estimate item category.
+func (s *EstimatesService) UpdateItemCategory(ctx context.Context, categoryID int64, category *EstimateItemCategoryUpdateRequest) (*EstimateItemCategory, error) {
+	return Update[EstimateItemCategory](ctx, s.client, fmt.Sprintf("estimate_item_categories/%d", categoryID), category)
+}
+
+// DeleteItemCategory deletes an estimate item category.
+func (s *EstimatesService) DeleteItemCategory(ctx context.Context, categoryID int64) error {
+	return Delete(ctx, s.client, fmt.Sprintf("estimate_item_categories/%d", categoryID))
 }

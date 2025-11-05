@@ -3,6 +3,7 @@ package harvest
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // InvoicesService handles communication with the invoice related
@@ -28,8 +29,8 @@ type InvoiceList struct {
 	Paginated[Invoice]
 }
 
-// List returns a list of invoices.
-func (s *InvoicesService) List(ctx context.Context, opts *InvoiceListOptions) (*InvoiceList, error) {
+// ListPage returns a single page of invoices.
+func (s *InvoicesService) ListPage(ctx context.Context, opts *InvoiceListOptions) (*InvoiceList, error) {
 	u, err := addOptions("invoices", opts)
 	if err != nil {
 		return nil, err
@@ -50,6 +51,38 @@ func (s *InvoicesService) List(ctx context.Context, opts *InvoiceListOptions) (*
 	invoices.Items = invoices.Invoices
 
 	return &invoices, nil
+}
+
+// List returns all invoices across all pages.
+func (s *InvoicesService) List(ctx context.Context, opts *InvoiceListOptions) ([]Invoice, error) {
+	if opts == nil {
+		opts = &InvoiceListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allInvoices []Invoice
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allInvoices = append(allInvoices, result.Invoices...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allInvoices, nil
 }
 
 // Get retrieves a specific invoice.
@@ -119,9 +152,83 @@ func (s *InvoicesService) Delete(ctx context.Context, invoiceID int64) error {
 	return Delete(ctx, s.client, fmt.Sprintf("invoices/%d", invoiceID))
 }
 
-// MarkAsSent marks an invoice as sent.
-func (s *InvoicesService) MarkAsSent(ctx context.Context, invoiceID int64) (*Invoice, error) {
-	return Update[Invoice](ctx, s.client, fmt.Sprintf("invoices/%d/messages", invoiceID), nil)
+// InvoiceMessageRequest represents a request to create an invoice message.
+type InvoiceMessageRequest struct {
+	EventType string `json:"event_type"`
+}
+
+// InvoiceMessageListOptions specifies optional parameters for listing invoice messages.
+type InvoiceMessageListOptions struct {
+	ListOptions
+	UpdatedSince string `url:"updated_since,omitempty"`
+}
+
+// InvoiceMessageList represents a list of invoice messages.
+type InvoiceMessageList struct {
+	InvoiceMessages []InvoiceMessage `json:"invoice_messages"`
+	Paginated[InvoiceMessage]
+}
+
+// ListMessagesPage returns a single page of messages for an invoice.
+func (s *InvoicesService) ListMessagesPage(ctx context.Context, invoiceID int64, opts *InvoiceMessageListOptions) (*InvoiceMessageList, error) {
+	u, err := addOptions(fmt.Sprintf("invoices/%d/messages", invoiceID), opts)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.client.NewRequest(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var messages InvoiceMessageList
+	_, err = s.client.Do(ctx, req, &messages)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy messages to Items for pagination
+	messages.Items = messages.InvoiceMessages
+
+	return &messages, nil
+}
+
+// ListMessages returns all messages for an invoice across all pages.
+func (s *InvoicesService) ListMessages(ctx context.Context, invoiceID int64, opts *InvoiceMessageListOptions) ([]InvoiceMessage, error) {
+	if opts == nil {
+		opts = &InvoiceMessageListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allMessages []InvoiceMessage
+
+	for {
+		result, err := s.ListMessagesPage(ctx, invoiceID, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allMessages = append(allMessages, result.InvoiceMessages...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allMessages, nil
+}
+
+// MarkAsSent marks a draft invoice as sent.
+func (s *InvoicesService) MarkAsSent(ctx context.Context, invoiceID int64) (*InvoiceMessage, error) {
+	req := &InvoiceMessageRequest{EventType: "send"}
+	return Create[InvoiceMessage](ctx, s.client, fmt.Sprintf("invoices/%d/messages", invoiceID), req)
 }
 
 // MarkAsClosed marks an invoice as closed.
@@ -134,7 +241,137 @@ func (s *InvoicesService) Reopen(ctx context.Context, invoiceID int64) (*Invoice
 	return Update[Invoice](ctx, s.client, fmt.Sprintf("invoices/%d/reopen", invoiceID), nil)
 }
 
-// MarkAsDraft marks an invoice as draft.
-func (s *InvoicesService) MarkAsDraft(ctx context.Context, invoiceID int64) (*Invoice, error) {
-	return Update[Invoice](ctx, s.client, fmt.Sprintf("invoices/%d/draft", invoiceID), nil)
+// MarkAsDraft marks an open invoice as a draft.
+func (s *InvoicesService) MarkAsDraft(ctx context.Context, invoiceID int64) (*InvoiceMessage, error) {
+	req := &InvoiceMessageRequest{EventType: "draft"}
+	return Create[InvoiceMessage](ctx, s.client, fmt.Sprintf("invoices/%d/messages", invoiceID), req)
+}
+
+// InvoiceItemCategoryListOptions specifies optional parameters for listing invoice item categories.
+type InvoiceItemCategoryListOptions struct {
+	ListOptions
+	UpdatedSince string `url:"updated_since,omitempty"`
+}
+
+// InvoiceItemCategoryList represents a list of invoice item categories.
+type InvoiceItemCategoryList struct {
+	InvoiceItemCategories []InvoiceItemCategory `json:"invoice_item_categories"`
+	Paginated[InvoiceItemCategory]
+}
+
+// ListItemCategoriesPage returns a single page of invoice item categories.
+func (s *InvoicesService) ListItemCategoriesPage(ctx context.Context, opts *InvoiceItemCategoryListOptions) (*InvoiceItemCategoryList, error) {
+	u, err := addOptions("invoice_item_categories", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.client.NewRequest(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var categories InvoiceItemCategoryList
+	_, err = s.client.Do(ctx, req, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy categories to Items for pagination
+	categories.Items = categories.InvoiceItemCategories
+
+	return &categories, nil
+}
+
+// ListItemCategories returns all invoice item categories across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *InvoicesService) ListItemCategories(ctx context.Context, opts *InvoiceItemCategoryListOptions) ([]InvoiceItemCategory, error) {
+	if opts == nil {
+		opts = &InvoiceItemCategoryListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allCategories []InvoiceItemCategory
+
+	// Fetch first page
+	result, err := s.ListItemCategoriesPage(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	allCategories = append(allCategories, result.InvoiceItemCategories...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var categories InvoiceItemCategoryList
+			_, err = s.client.Do(ctx, req, &categories)
+			if err != nil {
+				return nil, err
+			}
+			categories.Items = categories.InvoiceItemCategories
+			result = &categories
+			allCategories = append(allCategories, categories.InvoiceItemCategories...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListItemCategoriesPage(ctx, opts)
+			if err != nil {
+				return nil, err
+			}
+			allCategories = append(allCategories, result.InvoiceItemCategories...)
+		} else {
+			break
+		}
+	}
+
+	return allCategories, nil
+}
+
+// GetItemCategory retrieves a specific invoice item category.
+func (s *InvoicesService) GetItemCategory(ctx context.Context, categoryID int64) (*InvoiceItemCategory, error) {
+	return Get[InvoiceItemCategory](ctx, s.client, fmt.Sprintf("invoice_item_categories/%d", categoryID))
+}
+
+// InvoiceItemCategoryCreateRequest represents a request to create an invoice item category.
+type InvoiceItemCategoryCreateRequest struct {
+	Name string `json:"name"`
+}
+
+// CreateItemCategory creates a new invoice item category.
+func (s *InvoicesService) CreateItemCategory(ctx context.Context, category *InvoiceItemCategoryCreateRequest) (*InvoiceItemCategory, error) {
+	return Create[InvoiceItemCategory](ctx, s.client, "invoice_item_categories", category)
+}
+
+// InvoiceItemCategoryUpdateRequest represents a request to update an invoice item category.
+type InvoiceItemCategoryUpdateRequest struct {
+	Name string `json:"name,omitempty"`
+}
+
+// UpdateItemCategory updates an invoice item category.
+func (s *InvoicesService) UpdateItemCategory(ctx context.Context, categoryID int64, category *InvoiceItemCategoryUpdateRequest) (*InvoiceItemCategory, error) {
+	return Update[InvoiceItemCategory](ctx, s.client, fmt.Sprintf("invoice_item_categories/%d", categoryID), category)
+}
+
+// DeleteItemCategory deletes an invoice item category.
+func (s *InvoicesService) DeleteItemCategory(ctx context.Context, categoryID int64) error {
+	return Delete(ctx, s.client, fmt.Sprintf("invoice_item_categories/%d", categoryID))
 }

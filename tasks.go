@@ -24,8 +24,8 @@ type TaskList struct {
 	Paginated[Task]
 }
 
-// List returns a list of tasks.
-func (s *TasksService) List(ctx context.Context, opts *TaskListOptions) (*TaskList, error) {
+// ListPage returns a single page of tasks.
+func (s *TasksService) ListPage(ctx context.Context, opts *TaskListOptions) (*TaskList, error) {
 	u, err := addOptions("tasks", opts)
 	if err != nil {
 		return nil, err
@@ -46,6 +46,38 @@ func (s *TasksService) List(ctx context.Context, opts *TaskListOptions) (*TaskLi
 	tasks.Items = tasks.Tasks
 
 	return &tasks, nil
+}
+
+// List returns all tasks across all pages.
+func (s *TasksService) List(ctx context.Context, opts *TaskListOptions) ([]Task, error) {
+	if opts == nil {
+		opts = &TaskListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allTasks []Task
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allTasks = append(allTasks, result.Tasks...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allTasks, nil
 }
 
 // Get retrieves a specific task.

@@ -3,6 +3,7 @@ package harvest
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // UsersService handles communication with the user related
@@ -24,8 +25,8 @@ type UserList struct {
 	Paginated[User]
 }
 
-// List returns a list of users.
-func (s *UsersService) List(ctx context.Context, opts *UserListOptions) (*UserList, error) {
+// ListPage returns a single page of users.
+func (s *UsersService) ListPage(ctx context.Context, opts *UserListOptions) (*UserList, error) {
 	u, err := addOptions("users", opts)
 	if err != nil {
 		return nil, err
@@ -46,6 +47,69 @@ func (s *UsersService) List(ctx context.Context, opts *UserListOptions) (*UserLi
 	users.Items = users.Users
 
 	return &users, nil
+}
+
+// List returns all users across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *UsersService) List(ctx context.Context, opts *UserListOptions) ([]User, error) {
+	if opts == nil {
+		opts = &UserListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allUsers []User
+
+	// Fetch first page
+	result, err := s.ListPage(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	allUsers = append(allUsers, result.Users...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var users UserList
+			_, err = s.client.Do(ctx, req, &users)
+			if err != nil {
+				return nil, err
+			}
+			users.Items = users.Users
+			result = &users
+			allUsers = append(allUsers, users.Users...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListPage(ctx, opts)
+			if err != nil {
+				return nil, err
+			}
+			allUsers = append(allUsers, result.Users...)
+		} else {
+			break
+		}
+	}
+
+	return allUsers, nil
 }
 
 // Get retrieves a specific user.
@@ -117,8 +181,8 @@ type UserProjectAssignmentList struct {
 	Paginated[ProjectUserAssignment]
 }
 
-// ListProjectAssignments returns a list of project assignments for a user.
-func (s *UsersService) ListProjectAssignments(ctx context.Context, userID int64, opts *UserProjectAssignmentListOptions) (*UserProjectAssignmentList, error) {
+// ListProjectAssignmentsPage returns a single page of project assignments for a user.
+func (s *UsersService) ListProjectAssignmentsPage(ctx context.Context, userID int64, opts *UserProjectAssignmentListOptions) (*UserProjectAssignmentList, error) {
 	u, err := addOptions(fmt.Sprintf("users/%d/project_assignments", userID), opts)
 	if err != nil {
 		return nil, err
@@ -141,8 +205,71 @@ func (s *UsersService) ListProjectAssignments(ctx context.Context, userID int64,
 	return &assignments, nil
 }
 
-// ListMyProjectAssignments returns a list of project assignments for the currently authenticated user.
-func (s *UsersService) ListMyProjectAssignments(ctx context.Context, opts *UserProjectAssignmentListOptions) (*UserProjectAssignmentList, error) {
+// ListProjectAssignments returns all project assignments for a user across all pages.
+// This endpoint uses cursor-based pagination.
+func (s *UsersService) ListProjectAssignments(ctx context.Context, userID int64, opts *UserProjectAssignmentListOptions) ([]ProjectUserAssignment, error) {
+	if opts == nil {
+		opts = &UserProjectAssignmentListOptions{}
+	}
+	// Don't set Page - it's deprecated for cursor-based pagination
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allAssignments []ProjectUserAssignment
+
+	// Fetch first page
+	result, err := s.ListProjectAssignmentsPage(ctx, userID, opts)
+	if err != nil {
+		return nil, err
+	}
+	allAssignments = append(allAssignments, result.ProjectAssignments...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Parse the URL to get path and query
+			u, err := url.Parse(nextURL)
+			if err != nil {
+				return nil, err
+			}
+			pathAndQuery := u.Path
+			if u.RawQuery != "" {
+				pathAndQuery += "?" + u.RawQuery
+			}
+
+			req, err := s.client.NewRequest(ctx, "GET", pathAndQuery, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			var assignments UserProjectAssignmentList
+			_, err = s.client.Do(ctx, req, &assignments)
+			if err != nil {
+				return nil, err
+			}
+			assignments.Items = assignments.ProjectAssignments
+			result = &assignments
+			allAssignments = append(allAssignments, assignments.ProjectAssignments...)
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = s.ListProjectAssignmentsPage(ctx, userID, opts)
+			if err != nil {
+				return nil, err
+			}
+			allAssignments = append(allAssignments, result.ProjectAssignments...)
+		} else {
+			break
+		}
+	}
+
+	return allAssignments, nil
+}
+
+// ListMyProjectAssignmentsPage returns a single page of project assignments for the currently authenticated user.
+func (s *UsersService) ListMyProjectAssignmentsPage(ctx context.Context, opts *UserProjectAssignmentListOptions) (*UserProjectAssignmentList, error) {
 	u, err := addOptions("users/me/project_assignments", opts)
 	if err != nil {
 		return nil, err
@@ -163,4 +290,36 @@ func (s *UsersService) ListMyProjectAssignments(ctx context.Context, opts *UserP
 	assignments.Items = assignments.ProjectAssignments
 
 	return &assignments, nil
+}
+
+// ListMyProjectAssignments returns all project assignments for the currently authenticated user across all pages.
+func (s *UsersService) ListMyProjectAssignments(ctx context.Context, opts *UserProjectAssignmentListOptions) ([]ProjectUserAssignment, error) {
+	if opts == nil {
+		opts = &UserProjectAssignmentListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allAssignments []ProjectUserAssignment
+
+	for {
+		result, err := s.ListMyProjectAssignmentsPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allAssignments = append(allAssignments, result.ProjectAssignments...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allAssignments, nil
 }

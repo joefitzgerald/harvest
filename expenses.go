@@ -14,13 +14,14 @@ type ExpensesService struct {
 // ExpenseListOptions specifies optional parameters to the List method.
 type ExpenseListOptions struct {
 	ListOptions
-	UserID       int64  `url:"user_id,omitempty"`
-	ClientID     int64  `url:"client_id,omitempty"`
-	ProjectID    int64  `url:"project_id,omitempty"`
-	IsBilled     *bool  `url:"is_billed,omitempty"`
-	UpdatedSince string `url:"updated_since,omitempty"`
-	From         string `url:"from,omitempty"`
-	To           string `url:"to,omitempty"`
+	UserID         int64  `url:"user_id,omitempty"`
+	ClientID       int64  `url:"client_id,omitempty"`
+	ProjectID      int64  `url:"project_id,omitempty"`
+	IsBilled       *bool  `url:"is_billed,omitempty"`
+	ApprovalStatus string `url:"approval_status,omitempty"`
+	UpdatedSince   string `url:"updated_since,omitempty"`
+	From           string `url:"from,omitempty"`
+	To             string `url:"to,omitempty"`
 }
 
 // ExpenseList represents a list of expenses.
@@ -29,8 +30,8 @@ type ExpenseList struct {
 	Paginated[Expense]
 }
 
-// List returns a list of expenses.
-func (s *ExpensesService) List(ctx context.Context, opts *ExpenseListOptions) (*ExpenseList, error) {
+// ListPage returns a single page of expenses.
+func (s *ExpensesService) ListPage(ctx context.Context, opts *ExpenseListOptions) (*ExpenseList, error) {
 	u, err := addOptions("expenses", opts)
 	if err != nil {
 		return nil, err
@@ -51,6 +52,38 @@ func (s *ExpensesService) List(ctx context.Context, opts *ExpenseListOptions) (*
 	expenses.Items = expenses.Expenses
 
 	return &expenses, nil
+}
+
+// List returns all expenses across all pages.
+func (s *ExpensesService) List(ctx context.Context, opts *ExpenseListOptions) ([]Expense, error) {
+	if opts == nil {
+		opts = &ExpenseListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allExpenses []Expense
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allExpenses = append(allExpenses, result.Expenses...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allExpenses, nil
 }
 
 // Get retrieves a specific expense.
@@ -109,8 +142,8 @@ type ExpenseCategoryList struct {
 	Paginated[ExpenseCategory]
 }
 
-// ListCategories returns a list of expense categories.
-func (s *ExpensesService) ListCategories(ctx context.Context, opts *ExpenseCategoryListOptions) (*ExpenseCategoryList, error) {
+// ListCategoriesPage returns a single page of expense categories.
+func (s *ExpensesService) ListCategoriesPage(ctx context.Context, opts *ExpenseCategoryListOptions) (*ExpenseCategoryList, error) {
 	u, err := addOptions("expense_categories", opts)
 	if err != nil {
 		return nil, err
@@ -131,6 +164,38 @@ func (s *ExpensesService) ListCategories(ctx context.Context, opts *ExpenseCateg
 	categories.Items = categories.ExpenseCategories
 
 	return &categories, nil
+}
+
+// ListCategories returns all expense categories across all pages.
+func (s *ExpensesService) ListCategories(ctx context.Context, opts *ExpenseCategoryListOptions) ([]ExpenseCategory, error) {
+	if opts == nil {
+		opts = &ExpenseCategoryListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allCategories []ExpenseCategory
+
+	for {
+		result, err := s.ListCategoriesPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allCategories = append(allCategories, result.ExpenseCategories...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allCategories, nil
 }
 
 // GetCategory retrieves a specific expense category.

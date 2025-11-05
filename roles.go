@@ -22,8 +22,8 @@ type RoleList struct {
 	Paginated[Role]
 }
 
-// List returns a list of roles.
-func (s *RolesService) List(ctx context.Context, opts *RoleListOptions) (*RoleList, error) {
+// ListPage returns a single page of roles.
+func (s *RolesService) ListPage(ctx context.Context, opts *RoleListOptions) (*RoleList, error) {
 	u, err := addOptions("roles", opts)
 	if err != nil {
 		return nil, err
@@ -44,6 +44,38 @@ func (s *RolesService) List(ctx context.Context, opts *RoleListOptions) (*RoleLi
 	roles.Items = roles.Roles
 
 	return &roles, nil
+}
+
+// List returns all roles across all pages.
+func (s *RolesService) List(ctx context.Context, opts *RoleListOptions) ([]Role, error) {
+	if opts == nil {
+		opts = &RoleListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allRoles []Role
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allRoles = append(allRoles, result.Roles...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allRoles, nil
 }
 
 // Get retrieves a specific role.

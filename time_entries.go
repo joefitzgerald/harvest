@@ -21,6 +21,7 @@ type TimeEntryListOptions struct {
 	ExternalReferenceID string `url:"external_reference_id,omitempty"`
 	IsBilled            *bool  `url:"is_billed,omitempty"`
 	IsRunning           *bool  `url:"is_running,omitempty"`
+	ApprovalStatus      string `url:"approval_status,omitempty"`
 	UpdatedSince        string `url:"updated_since,omitempty"`
 	From                string `url:"from,omitempty"`
 	To                  string `url:"to,omitempty"`
@@ -32,8 +33,8 @@ type TimeEntryList struct {
 	Paginated[TimeEntry]
 }
 
-// List returns a list of time entries.
-func (s *TimeEntriesService) List(ctx context.Context, opts *TimeEntryListOptions) (*TimeEntryList, error) {
+// ListPage returns a single page of time entries.
+func (s *TimeEntriesService) ListPage(ctx context.Context, opts *TimeEntryListOptions) (*TimeEntryList, error) {
 	u, err := addOptions("time_entries", opts)
 	if err != nil {
 		return nil, err
@@ -54,6 +55,38 @@ func (s *TimeEntriesService) List(ctx context.Context, opts *TimeEntryListOption
 	entries.Items = entries.TimeEntries
 
 	return &entries, nil
+}
+
+// List returns all time entries across all pages.
+func (s *TimeEntriesService) List(ctx context.Context, opts *TimeEntryListOptions) ([]TimeEntry, error) {
+	if opts == nil {
+		opts = &TimeEntryListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allEntries []TimeEntry
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allEntries = append(allEntries, result.TimeEntries...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allEntries, nil
 }
 
 // Get retrieves a specific time entry.

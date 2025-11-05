@@ -228,6 +228,37 @@ type InvoiceItem struct {
 	Taxed2      bool            `json:"taxed2"`
 }
 
+// InvoiceMessage represents a message associated with an invoice.
+type InvoiceMessage struct {
+	ID                         int64     `json:"id"`
+	SentBy                     string    `json:"sent_by"`
+	SentByEmail                string    `json:"sent_by_email"`
+	SentFrom                   string    `json:"sent_from"`
+	SentFromEmail              string    `json:"sent_from_email"`
+	IncludeLinkToClientInvoice bool      `json:"include_link_to_client_invoice"`
+	SendMeACopy                bool      `json:"send_me_a_copy"`
+	ThankYou                   bool      `json:"thank_you"`
+	Reminder                   bool      `json:"reminder"`
+	SendReminderOn             *Date     `json:"send_reminder_on"`
+	CreatedAt                  time.Time `json:"created_at"`
+	UpdatedAt                  time.Time `json:"updated_at"`
+	AttachPDF                  bool      `json:"attach_pdf"`
+	EventType                  string    `json:"event_type"`
+	Recipients                 []string  `json:"recipients"`
+	Subject                    *string   `json:"subject"`
+	Body                       *string   `json:"body"`
+}
+
+// InvoiceItemCategory represents a category for invoice line items.
+type InvoiceItemCategory struct {
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	UseAsService bool      `json:"use_as_service"`
+	UseAsExpense bool      `json:"use_as_expense"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // Estimate represents an estimate in Harvest.
 type Estimate struct {
 	ID             int64            `json:"id"`
@@ -265,6 +296,14 @@ type EstimateItem struct {
 	Amount      decimal.Decimal `json:"amount"`
 	Taxed       bool            `json:"taxed"`
 	Taxed2      bool            `json:"taxed2"`
+}
+
+// EstimateItemCategory represents a category for estimate line items.
+type EstimateItemCategory struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Expense represents an expense in Harvest.

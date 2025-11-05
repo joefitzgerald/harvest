@@ -39,8 +39,26 @@ type PaginationLinks struct {
 }
 
 // HasNextPage returns true if there is a next page of results.
+// This works for both page-based and cursor-based pagination.
 func (p *Paginated[T]) HasNextPage() bool {
-	return p.NextPage != nil
+	// For page-based pagination, check NextPage field
+	if p.NextPage != nil {
+		return true
+	}
+	// For cursor-based pagination, check Links.Next
+	if p.Links != nil && p.Links.Next != "" {
+		return true
+	}
+	return false
+}
+
+// GetNextPageURL returns the URL for the next page.
+// Returns empty string if there is no next page.
+func (p *Paginated[T]) GetNextPageURL() string {
+	if p.Links != nil && p.Links.Next != "" {
+		return p.Links.Next
+	}
+	return ""
 }
 
 // HasPreviousPage returns true if there is a previous page of results.
@@ -69,7 +87,7 @@ func NewIterator[T any](ctx context.Context, client *API, path string, opts *Lis
 		opts.Page = 1
 	}
 	if opts.PerPage == 0 {
-		opts.PerPage = 100 // Default page size
+		opts.PerPage = DefaultPerPage // Default page size
 	}
 
 	return &Iterator[T]{

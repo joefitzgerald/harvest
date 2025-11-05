@@ -17,6 +17,8 @@ import (
 const (
 	defaultBaseURL = "https://api.harvestapp.com/v2/"
 	defaultTimeout = 30 * time.Second
+	// DefaultPerPage is the default number of items to request per page for list operations.
+	DefaultPerPage = 2000
 )
 
 type API struct {
@@ -167,8 +169,8 @@ func (c *API) Do(ctx context.Context, req *http.Request, v any) (*http.Response,
 
 // Generic CRUD methods using Go 1.25 generics
 
-// List performs a GET request to list resources with pagination.
-func List[T any](ctx context.Context, c *API, path string, opts *ListOptions) (*Paginated[T], error) {
+// ListPage performs a GET request to list resources with pagination, returning a single page.
+func ListPage[T any](ctx context.Context, c *API, path string, opts *ListOptions) (*Paginated[T], error) {
 	u, err := addOptions(path, opts)
 	if err != nil {
 		return nil, err
@@ -186,6 +188,83 @@ func List[T any](ctx context.Context, c *API, path string, opts *ListOptions) (*
 	}
 
 	return &result, nil
+}
+
+// ListPageFromURL performs a GET request using a full pagination URL.
+// This is used for cursor-based pagination where the API provides full URLs in the links section.
+func ListPageFromURL[T any](ctx context.Context, c *API, fullURL string) (*Paginated[T], error) {
+	// Parse the full URL to extract just the path and query
+	u, err := url.Parse(fullURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the path and raw query from the parsed URL
+	pathAndQuery := u.Path
+	if u.RawQuery != "" {
+		pathAndQuery += "?" + u.RawQuery
+	}
+
+	req, err := c.NewRequest(ctx, "GET", pathAndQuery, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result Paginated[T]
+	_, err = c.Do(ctx, req, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+// List performs a GET request to list all resources across all pages.
+// Supports both page-based and cursor-based pagination.
+func List[T any](ctx context.Context, c *API, path string, opts *ListOptions) ([]T, error) {
+	if opts == nil {
+		opts = &ListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allItems []T
+
+	// Fetch first page
+	result, err := ListPage[T](ctx, c, path, opts)
+	if err != nil {
+		return nil, err
+	}
+	allItems = append(allItems, result.Items...)
+
+	// Continue fetching remaining pages
+	for result.HasNextPage() {
+		// Check if using cursor-based pagination
+		if nextURL := result.GetNextPageURL(); nextURL != "" {
+			// Use cursor-based pagination (follow the Links.Next URL)
+			result, err = ListPageFromURL[T](ctx, c, nextURL)
+			if err != nil {
+				return nil, err
+			}
+		} else if result.NextPage != nil {
+			// Use page-based pagination
+			opts.Page = *result.NextPage
+			result, err = ListPage[T](ctx, c, path, opts)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Should not reach here if HasNextPage is working correctly
+			break
+		}
+		allItems = append(allItems, result.Items...)
+	}
+
+	return allItems, nil
 }
 
 // Get performs a GET request to retrieve a single resource.

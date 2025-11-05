@@ -24,8 +24,8 @@ type ClientList struct {
 	Paginated[Client]
 }
 
-// List returns a list of clients.
-func (s *ClientsService) List(ctx context.Context, opts *ClientListOptions) (*ClientList, error) {
+// ListPage returns a single page of clients.
+func (s *ClientsService) ListPage(ctx context.Context, opts *ClientListOptions) (*ClientList, error) {
 	u, err := addOptions("clients", opts)
 	if err != nil {
 		return nil, err
@@ -46,6 +46,38 @@ func (s *ClientsService) List(ctx context.Context, opts *ClientListOptions) (*Cl
 	clients.Items = clients.Clients
 
 	return &clients, nil
+}
+
+// List returns all clients across all pages.
+func (s *ClientsService) List(ctx context.Context, opts *ClientListOptions) ([]Client, error) {
+	if opts == nil {
+		opts = &ClientListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allClients []Client
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allClients = append(allClients, result.Clients...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allClients, nil
 }
 
 // Get retrieves a specific client.
@@ -103,8 +135,8 @@ type ContactList struct {
 	Paginated[Contact]
 }
 
-// ListContacts returns a list of contacts.
-func (s *ContactsService) List(ctx context.Context, opts *ContactListOptions) (*ContactList, error) {
+// ListPage returns a single page of contacts.
+func (s *ContactsService) ListPage(ctx context.Context, opts *ContactListOptions) (*ContactList, error) {
 	u, err := addOptions("contacts", opts)
 	if err != nil {
 		return nil, err
@@ -125,6 +157,38 @@ func (s *ContactsService) List(ctx context.Context, opts *ContactListOptions) (*
 	contacts.Items = contacts.Contacts
 
 	return &contacts, nil
+}
+
+// List returns all contacts across all pages.
+func (s *ContactsService) List(ctx context.Context, opts *ContactListOptions) ([]Contact, error) {
+	if opts == nil {
+		opts = &ContactListOptions{}
+	}
+	if opts.Page == 0 {
+		opts.Page = 1
+	}
+	if opts.PerPage == 0 {
+		opts.PerPage = DefaultPerPage
+	}
+
+	var allContacts []Contact
+
+	for {
+		result, err := s.ListPage(ctx, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		allContacts = append(allContacts, result.Contacts...)
+
+		if !result.HasNextPage() {
+			break
+		}
+
+		opts.Page = *result.NextPage
+	}
+
+	return allContacts, nil
 }
 
 // GetContact retrieves a specific contact.
