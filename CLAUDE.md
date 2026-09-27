@@ -81,7 +81,10 @@ The library provides complete coverage of Harvest API v2 endpoints:
 - Estimates (with Line Items, Messages)
 - Expenses (with Categories)
 - Reports (Time, Expense, Uninvoiced, Project Budget)
+- Company-wide User/Task Assignment lists, User Billable/Cost Rates, Teammates, Invoice Payments
+- `ListRaw`/`GetRaw` generic helpers that return each object together with its raw JSON
 - Roles
+- Paid Time Off (Holiday Calendars, Time Off Policies, Requests, Work Schedules, Assignments, Allocations, Balances)
 
 ### Postman Collection
 

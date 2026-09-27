@@ -1,6 +1,6 @@
 module github.com/joefitzgerald/harvest
 
-go 1.26
+go 1.27
 
 require (
 	github.com/google/go-querystring v1.2.0

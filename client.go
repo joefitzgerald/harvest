@@ -41,6 +41,7 @@ type API struct {
 	Expenses    *ExpensesService
 	Reports     *ReportsService
 	Roles       *RolesService
+	PTO         *PTOService
 }
 
 // New creates a new Harvest API client with the given User-Agent.
@@ -101,6 +102,7 @@ func NewWithConfig(accessToken, accountID, userAgent string, httpClient *http.Cl
 	c.Expenses = &ExpensesService{client: c}
 	c.Reports = &ReportsService{client: c}
 	c.Roles = &RolesService{client: c}
+	c.PTO = &PTOService{client: c}
 
 	return c, nil
 }

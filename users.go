@@ -323,3 +323,21 @@ func (s *UsersService) ListMyProjectAssignments(ctx context.Context, opts *UserP
 
 	return allAssignments, nil
 }
+
+// ListBillableRates returns a user's effective-dated billable rates
+// (GET /v2/users/{USER_ID}/billable_rates). Requires administrator permissions.
+func (s *UsersService) ListBillableRates(ctx context.Context, userID int64, opts *ListOptions) ([]UserBillableRate, error) {
+	return listValues[UserBillableRate](ctx, s.client, fmt.Sprintf("users/%d/billable_rates", userID), "billable_rates", defaultListOptions(opts))
+}
+
+// ListCostRates returns a user's effective-dated cost rates
+// (GET /v2/users/{USER_ID}/cost_rates). Requires administrator permissions.
+func (s *UsersService) ListCostRates(ctx context.Context, userID int64, opts *ListOptions) ([]UserCostRate, error) {
+	return listValues[UserCostRate](ctx, s.client, fmt.Sprintf("users/%d/cost_rates", userID), "cost_rates", defaultListOptions(opts))
+}
+
+// ListTeammates returns the teammates assigned to a Manager-role user
+// (GET /v2/users/{USER_ID}/teammates). Requires administrator permissions.
+func (s *UsersService) ListTeammates(ctx context.Context, userID int64, opts *ListOptions) ([]Teammate, error) {
+	return listValues[Teammate](ctx, s.client, fmt.Sprintf("users/%d/teammates", userID), "teammates", defaultListOptions(opts))
+}

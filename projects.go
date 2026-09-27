@@ -426,3 +426,23 @@ func (s *ProjectsService) UpdateTaskAssignment(ctx context.Context, projectID, t
 func (s *ProjectsService) DeleteTaskAssignment(ctx context.Context, projectID, taskAssignmentID int64) error {
 	return Delete(ctx, s.client, fmt.Sprintf("projects/%d/task_assignments/%d", projectID, taskAssignmentID))
 }
+
+// ListAllUserAssignments returns user assignments across every project
+// (GET /v2/user_assignments), so callers need not loop over projects.
+func (s *ProjectsService) ListAllUserAssignments(ctx context.Context, opts *UserAssignmentListOptions) ([]ProjectUserAssignment, error) {
+	if opts == nil {
+		opts = &UserAssignmentListOptions{}
+	}
+	opts.ListOptions = *defaultListOptions(&opts.ListOptions)
+	return listValues[ProjectUserAssignment](ctx, s.client, "user_assignments", "user_assignments", opts)
+}
+
+// ListAllTaskAssignments returns task assignments across every project
+// (GET /v2/task_assignments), so callers need not loop over projects.
+func (s *ProjectsService) ListAllTaskAssignments(ctx context.Context, opts *TaskAssignmentListOptions) ([]ProjectTaskAssignment, error) {
+	if opts == nil {
+		opts = &TaskAssignmentListOptions{}
+	}
+	opts.ListOptions = *defaultListOptions(&opts.ListOptions)
+	return listValues[ProjectTaskAssignment](ctx, s.client, "task_assignments", "task_assignments", opts)
+}

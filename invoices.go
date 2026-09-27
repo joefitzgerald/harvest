@@ -375,3 +375,19 @@ func (s *InvoicesService) UpdateItemCategory(ctx context.Context, categoryID int
 func (s *InvoicesService) DeleteItemCategory(ctx context.Context, categoryID int64) error {
 	return Delete(ctx, s.client, fmt.Sprintf("invoice_item_categories/%d", categoryID))
 }
+
+// InvoicePaymentListOptions specifies optional parameters for listing invoice payments.
+type InvoicePaymentListOptions struct {
+	ListOptions
+	UpdatedSince string `url:"updated_since,omitempty"`
+}
+
+// ListPayments returns all payments recorded against an invoice
+// (GET /v2/invoices/{INVOICE_ID}/payments).
+func (s *InvoicesService) ListPayments(ctx context.Context, invoiceID int64, opts *InvoicePaymentListOptions) ([]InvoicePayment, error) {
+	if opts == nil {
+		opts = &InvoicePaymentListOptions{}
+	}
+	opts.ListOptions = *defaultListOptions(&opts.ListOptions)
+	return listValues[InvoicePayment](ctx, s.client, fmt.Sprintf("invoices/%d/payments", invoiceID), "invoice_payments", opts)
+}

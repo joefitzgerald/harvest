@@ -120,10 +120,13 @@ type User struct {
 	HasAccessToAllFutureProjects bool             `json:"has_access_to_all_future_projects"`
 	IsContractor                 bool             `json:"is_contractor"`
 	IsActive                     bool             `json:"is_active"`
+	SamlExempt                   bool             `json:"saml_exempt"`
 	WeeklyCapacity               int              `json:"weekly_capacity"`
 	DefaultHourlyRate            *decimal.Decimal `json:"default_hourly_rate,omitempty"`
 	CostRate                     *decimal.Decimal `json:"cost_rate,omitempty"`
 	Roles                        []string         `json:"roles"`
+	AccessRoles                  []string         `json:"access_roles"`
+	PermissionsProfile           string           `json:"permissions_profile,omitempty"`
 	AvatarURL                    string           `json:"avatar_url"`
 	CreatedAt                    time.Time        `json:"created_at"`
 	UpdatedAt                    time.Time        `json:"updated_at"`
@@ -153,11 +156,13 @@ type TimeEntry struct {
 	TaskAssignment    *ProjectTaskAssignment `json:"task_assignment"`
 	Invoice           *Invoice               `json:"invoice,omitempty"`
 	Hours             decimal.Decimal        `json:"hours"`
+	HoursWithoutTimer decimal.Decimal        `json:"hours_without_timer"`
 	RoundedHours      decimal.Decimal        `json:"rounded_hours"`
 	Notes             string                 `json:"notes,omitempty"`
 	IsLocked          bool                   `json:"is_locked"`
 	LockedReason      string                 `json:"locked_reason,omitempty"`
 	IsClosed          bool                   `json:"is_closed"`
+	ApprovalStatus    string                 `json:"approval_status,omitempty"`
 	IsBilled          bool                   `json:"is_billed"`
 	TimerStartedAt    *time.Time             `json:"timer_started_at,omitempty"`
 	StartedTime       string                 `json:"started_time,omitempty"`
@@ -186,8 +191,11 @@ type ExternalReference struct {
 type Invoice struct {
 	ID                 int64            `json:"id"`
 	Client             *Client          `json:"client"`
+	ClientKey          string           `json:"client_key,omitempty"`
 	LineItems          []InvoiceItem    `json:"line_items"`
 	Estimate           *Estimate        `json:"estimate,omitempty"`
+	Retainer           *IDName          `json:"retainer,omitempty"`
+	Creator            *IDName          `json:"creator,omitempty"`
 	Number             string           `json:"number"`
 	PurchaseOrder      string           `json:"purchase_order,omitempty"`
 	Amount             decimal.Decimal  `json:"amount"`
@@ -207,8 +215,10 @@ type Invoice struct {
 	IssueDate          Date             `json:"issue_date"`
 	DueDate            *Date            `json:"due_date,omitempty"`
 	PaymentTerm        string           `json:"payment_term,omitempty"`
+	PaymentOptions     []string         `json:"payment_options,omitempty"`
 	SentAt             *time.Time       `json:"sent_at,omitempty"`
 	PaidAt             *time.Time       `json:"paid_at,omitempty"`
+	PaidDate           *Date            `json:"paid_date,omitempty"`
 	ClosedAt           *time.Time       `json:"closed_at,omitempty"`
 	RecurringInvoiceID *int64           `json:"recurring_invoice_id,omitempty"`
 	CreatedAt          time.Time        `json:"created_at"`
@@ -263,6 +273,8 @@ type InvoiceItemCategory struct {
 type Estimate struct {
 	ID             int64            `json:"id"`
 	Client         *Client          `json:"client"`
+	ClientKey      string           `json:"client_key,omitempty"`
+	Creator        *IDName          `json:"creator,omitempty"`
 	LineItems      []EstimateItem   `json:"line_items"`
 	Number         string           `json:"number"`
 	PurchaseOrder  string           `json:"purchase_order,omitempty"`
@@ -365,11 +377,10 @@ type Date struct {
 // UnmarshalJSON implements json.Unmarshaler for Date.
 func (d *Date) UnmarshalJSON(b []byte) error {
 	s := string(b)
-	s = s[1 : len(s)-1] // Remove quotes
-
-	if s == "" || s == "null" {
+	if s == "null" || s == `""` || len(s) < 2 {
 		return nil
 	}
+	s = s[1 : len(s)-1] // Remove quotes
 
 	t, err := time.Parse("2006-01-02", s)
 	if err != nil {
@@ -391,4 +402,224 @@ func (d Date) MarshalJSON() ([]byte, error) {
 // String returns the date as a string in YYYY-MM-DD format.
 func (d Date) String() string {
 	return d.Format("2006-01-02")
+}
+
+// IDName is the compact {id, name} reference Harvest nests inside other objects.
+type IDName struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// InvoicePayment represents a payment recorded against an invoice.
+type InvoicePayment struct {
+	ID              int64           `json:"id"`
+	Amount          decimal.Decimal `json:"amount"`
+	PaidAt          *time.Time      `json:"paid_at,omitempty"`
+	PaidDate        *Date           `json:"paid_date,omitempty"`
+	RecordedBy      string          `json:"recorded_by,omitempty"`
+	RecordedByEmail string          `json:"recorded_by_email,omitempty"`
+	Notes           string          `json:"notes,omitempty"`
+	TransactionID   string          `json:"transaction_id,omitempty"`
+	PaymentGateway  *PaymentGateway `json:"payment_gateway,omitempty"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+}
+
+// PaymentGateway identifies the gateway that processed a payment.
+type PaymentGateway struct {
+	ID   *int64 `json:"id"`
+	Name string `json:"name,omitempty"`
+}
+
+// UserBillableRate is an effective-dated billable rate for a user.
+type UserBillableRate struct {
+	ID        int64           `json:"id"`
+	Amount    decimal.Decimal `json:"amount"`
+	StartDate *Date           `json:"start_date,omitempty"`
+	EndDate   *Date           `json:"end_date,omitempty"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+// UserCostRate is an effective-dated cost rate for a user.
+type UserCostRate struct {
+	ID        int64           `json:"id"`
+	Amount    decimal.Decimal `json:"amount"`
+	StartDate *Date           `json:"start_date,omitempty"`
+	EndDate   *Date           `json:"end_date,omitempty"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+// Teammate is a user managed by a Manager-role user.
+type Teammate struct {
+	ID        int64  `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+// PTOTypeRef is the compact time off policy reference nested in PTO objects.
+type PTOTypeRef struct {
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Color string `json:"color,omitempty"`
+	Icon  string `json:"icon,omitempty"`
+}
+
+// HolidayCalendar represents a PTO holiday calendar.
+type HolidayCalendar struct {
+	ID           int64                  `json:"id"`
+	Name         string                 `json:"name"`
+	EntriesCount int                    `json:"entries_count"`
+	Entries      []HolidayCalendarEntry `json:"entries"`
+	CreatedAt    time.Time              `json:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+}
+
+// HolidayCalendarEntry represents one holiday on a calendar.
+type HolidayCalendarEntry struct {
+	ID                   int64      `json:"id"`
+	PTOHolidayCalendarID int64      `json:"pto_holiday_calendar_id,omitempty"`
+	Name                 string     `json:"name"`
+	Date                 *Date      `json:"date,omitempty"`
+	CreatedAt            *time.Time `json:"created_at,omitempty"`
+	UpdatedAt            *time.Time `json:"updated_at,omitempty"`
+}
+
+// PTOType represents a time off policy.
+type PTOType struct {
+	ID                     int64            `json:"id"`
+	Name                   string           `json:"name"`
+	Color                  string           `json:"color,omitempty"`
+	Icon                   string           `json:"icon,omitempty"`
+	AccrualType            string           `json:"accrual_type,omitempty"`
+	AccrualSchedule        string           `json:"accrual_schedule,omitempty"`
+	AccrualFirstPayday     *Date            `json:"accrual_first_payday,omitempty"`
+	AccrualLeaveHours      *decimal.Decimal `json:"accrual_leave_hours,omitempty"`
+	AccrualWorkedHours     *decimal.Decimal `json:"accrual_worked_hours,omitempty"`
+	AccrualMaxHoursPerYear *decimal.Decimal `json:"accrual_max_hours_per_year,omitempty"`
+	DefaultDaysPerYear     *decimal.Decimal `json:"default_days_per_year,omitempty"`
+	MaxCarryoverDays       *decimal.Decimal `json:"max_carryover_days,omitempty"`
+	RequiresApproval       bool             `json:"requires_approval"`
+	VisibleToAll           bool             `json:"visible_to_all"`
+	IsActive               bool             `json:"is_active"`
+	CreatedAt              time.Time        `json:"created_at"`
+	UpdatedAt              time.Time        `json:"updated_at"`
+}
+
+// PTORequest represents a time off request.
+type PTORequest struct {
+	ID                       int64            `json:"id"`
+	Status                   string           `json:"status"`
+	StartDate                *Date            `json:"start_date,omitempty"`
+	EndDate                  *Date            `json:"end_date,omitempty"`
+	Days                     decimal.Decimal  `json:"days"`
+	BusinessDaysAtSubmission *decimal.Decimal `json:"business_days_at_submission,omitempty"`
+	StartTimeMinutes         *int             `json:"start_time_minutes,omitempty"`
+	EndTimeMinutes           *int             `json:"end_time_minutes,omitempty"`
+	Notes                    string           `json:"notes,omitempty"`
+	ReviewReason             string           `json:"review_reason,omitempty"`
+	ReviewedAt               *time.Time       `json:"reviewed_at,omitempty"`
+	CreatedAt                time.Time        `json:"created_at"`
+	UpdatedAt                time.Time        `json:"updated_at"`
+	User                     *IDName          `json:"user,omitempty"`
+	PTOType                  *PTOTypeRef      `json:"pto_type,omitempty"`
+	Reviewer                 *IDName          `json:"reviewer,omitempty"`
+	RequestDays              []PTORequestDay  `json:"request_days"`
+}
+
+// PTORequestDay is one day of a time off request.
+type PTORequestDay struct {
+	ID          int64           `json:"id"`
+	Date        *Date           `json:"date,omitempty"`
+	Hours       decimal.Decimal `json:"hours"`
+	DayFraction decimal.Decimal `json:"day_fraction"`
+	CreatedAt   *time.Time      `json:"created_at,omitempty"`
+	UpdatedAt   *time.Time      `json:"updated_at,omitempty"`
+}
+
+// WorkSchedule represents a PTO work schedule.
+type WorkSchedule struct {
+	ID             int64           `json:"id"`
+	Name           string          `json:"name"`
+	IsDefault      bool            `json:"is_default"`
+	IsActive       bool            `json:"is_active"`
+	WeeklyHours    decimal.Decimal `json:"weekly_hours"`
+	MondayHours    decimal.Decimal `json:"monday_hours"`
+	TuesdayHours   decimal.Decimal `json:"tuesday_hours"`
+	WednesdayHours decimal.Decimal `json:"wednesday_hours"`
+	ThursdayHours  decimal.Decimal `json:"thursday_hours"`
+	FridayHours    decimal.Decimal `json:"friday_hours"`
+	SaturdayHours  decimal.Decimal `json:"saturday_hours"`
+	SundayHours    decimal.Decimal `json:"sunday_hours"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+}
+
+// PTOAssignment is a user's holiday calendar and work schedule assignment.
+type PTOAssignment struct {
+	User                  *IDName                `json:"user,omitempty"`
+	HolidayCalendar       *IDName                `json:"holiday_calendar,omitempty"`
+	WorkSchedule          *IDName                `json:"work_schedule,omitempty"`
+	EffectiveWorkSchedule *EffectiveWorkSchedule `json:"effective_work_schedule,omitempty"`
+}
+
+// EffectiveWorkSchedule is the schedule actually applied to a user.
+type EffectiveWorkSchedule struct {
+	Name        string          `json:"name"`
+	WeeklyHours decimal.Decimal `json:"weekly_hours"`
+}
+
+// PTOAllocation is a user's per-year allocation for a time off policy.
+type PTOAllocation struct {
+	ID                        int64            `json:"id"`
+	Year                      int              `json:"year"`
+	User                      *IDName          `json:"user,omitempty"`
+	PTOType                   *PTOTypeRef      `json:"pto_type,omitempty"`
+	AccrualType               string           `json:"accrual_type,omitempty"`
+	AccrualSchedule           string           `json:"accrual_schedule,omitempty"`
+	AccrualFirstPayday        *Date            `json:"accrual_first_payday,omitempty"`
+	AccrualLeaveHours         *decimal.Decimal `json:"accrual_leave_hours,omitempty"`
+	AccrualWorkedHours        *decimal.Decimal `json:"accrual_worked_hours,omitempty"`
+	AccrualMaxHoursPerYear    *decimal.Decimal `json:"accrual_max_hours_per_year,omitempty"`
+	DaysPerYear               *decimal.Decimal `json:"days_per_year,omitempty"`
+	CarryoverDays             *decimal.Decimal `json:"carryover_days,omitempty"`
+	RequiresApproval          *bool            `json:"requires_approval,omitempty"`
+	EffectiveDaysPerYear      *decimal.Decimal `json:"effective_days_per_year,omitempty"`
+	EffectiveAccrualType      string           `json:"effective_accrual_type,omitempty"`
+	EffectiveAccrualSchedule  string           `json:"effective_accrual_schedule,omitempty"`
+	EffectiveRequiresApproval bool             `json:"effective_requires_approval"`
+	CreatedAt                 time.Time        `json:"created_at"`
+	UpdatedAt                 time.Time        `json:"updated_at"`
+}
+
+// PTOBalances is the balances response for one user and year.
+type PTOBalances struct {
+	User     *IDName      `json:"user,omitempty"`
+	Year     int          `json:"year"`
+	AsOf     *Date        `json:"as_of,omitempty"`
+	Balances []PTOBalance `json:"balances"`
+}
+
+// PTOBalance is a user's balance for one time off policy.
+type PTOBalance struct {
+	PTOType              *PTOTypeRef     `json:"pto_type,omitempty"`
+	IsRequestable        bool            `json:"is_requestable"`
+	Year                 int             `json:"year"`
+	AsOf                 *Date           `json:"as_of,omitempty"`
+	IsUnlimited          bool            `json:"is_unlimited"`
+	RequiresApproval     bool            `json:"requires_approval"`
+	EffectiveAccrualType string          `json:"effective_accrual_type,omitempty"`
+	AccrualSchedule      string          `json:"accrual_schedule,omitempty"`
+	AccruedDays          decimal.Decimal `json:"accrued_days"`
+	CarryoverDays        decimal.Decimal `json:"carryover_days"`
+	AvailableDays        decimal.Decimal `json:"available_days"`
+	UsedDays             decimal.Decimal `json:"used_days"`
+	PendingDays          decimal.Decimal `json:"pending_days"`
+	RemainingDays        decimal.Decimal `json:"remaining_days"`
+	UsedHours            decimal.Decimal `json:"used_hours"`
+	PendingHours         decimal.Decimal `json:"pending_hours"`
+	UsedFraction         decimal.Decimal `json:"used_fraction"`
+	PendingFraction      decimal.Decimal `json:"pending_fraction"`
 }
