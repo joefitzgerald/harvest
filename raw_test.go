@@ -160,3 +160,13 @@ func TestDateUnmarshalNull(t *testing.T) {
 		t.Errorf("unexpected %+v", v)
 	}
 }
+
+func TestInvoiceMessageRecipientsAreObjects(t *testing.T) {
+	var m InvoiceMessage
+	if err := json.Unmarshal([]byte(`{"id":1,"recipients":[{"name":"A","email":"a@example.com"}],"subject":"s","body":"b"}`), &m); err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Recipients) != 1 || m.Recipients[0].Email != "a@example.com" {
+		t.Fatalf("recipients = %+v", m.Recipients)
+	}
+}
